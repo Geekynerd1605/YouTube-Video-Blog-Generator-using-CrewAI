@@ -1,3 +1,10 @@
+"""
+CrewAI agent definitions for the YouTube blog pipeline.
+
+Loads OpenAI credentials from .env, configures the shared LLM, and defines
+the researcher (gather video context) and writer (produce the blog post).
+"""
+
 from crewai import Agent, LLM
 from tools import yt_tool
 import os
@@ -5,14 +12,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Shared language model for both agents (OpenAI via CrewAI LLM wrapper).
 llm = LLM(model="gpt-4o-mini")
 
 os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY", "")
-# os.environ['OPENAI_MODEL_NAME']='GPT-4o mini'
 
-## Create a Senior Blog Content Researcher
-
-blog_researcher=Agent(
+# --- Research agent: searches the configured YouTube channel for {topic} ---
+blog_researcher = Agent(
     role='Blog Researcher from Youtube Videos',
     goal='get the relevant video content for the topic{topic} from the Yt channel',
     verbose=True,
@@ -26,9 +32,8 @@ blog_researcher=Agent(
     allow_delegation=False,
 )
 
-## Creating a Senior Blog writer agent with YT Tool
-
-blog_writer=Agent(
+# --- Writer agent: turns research into a narrative blog post for {topic} ---
+blog_writer = Agent(
     role="Blog Writer",
     goal='Narrate compelling tech stories about the video {topic} from YT channel',
     verbose=True,

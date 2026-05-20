@@ -1,8 +1,15 @@
+"""
+CrewAI task definitions for research and blog writing.
+
+Both tasks use the YouTube channel search tool. Placeholders like {topic}
+are filled from crew.kickoff(inputs={"topic": "..."}) in crew.py.
+"""
+
 from crewai import Task
 from tools import yt_tool
 from agents import blog_researcher, blog_writer
 
-## Research Task
+# Step 1: Search the channel and produce a research report (no fabricated video URLs).
 research_task = Task(
     description=(
         "Search the configured YouTube channel for content about {topic} using the "
@@ -14,9 +21,8 @@ research_task = Task(
     agent=blog_researcher
 )
 
-## Writing task with language model configuration
-
-write_task=Task(
+# Step 2: Write the blog and save to new-blog-post.md (output_file on the task).
+write_task = Task(
     description=(
         "Using the channel search tool, gather information about {topic}. "
         "Use search_query only; do not use made-up youtube.com/watch links."

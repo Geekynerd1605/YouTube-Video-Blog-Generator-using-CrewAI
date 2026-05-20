@@ -1,3 +1,10 @@
+"""
+Entry point for the YouTube Blog Creator crew.
+
+Orchestrates a sequential CrewAI workflow: research from a YouTube channel,
+then write a markdown blog post to new-blog-post.md.
+"""
+
 import sys
 import time
 
@@ -5,6 +12,7 @@ from crewai import Crew, Process
 from agents import blog_researcher, blog_writer
 from tasks import research_task, write_task
 
+# Sequential process: research_task runs first, then write_task uses its context.
 crew = Crew(
     agents=[blog_researcher, blog_writer],
     tasks=[research_task, write_task],
@@ -16,6 +24,7 @@ crew = Crew(
 )
 
 if __name__ == "__main__":
+    # Change "topic" to generate blogs on different subjects.
     result = crew.kickoff(inputs={"topic": "Why Oracle Laid Off 30k Employees Despite Strong Revenue Growth"})
     print(result)
     sys.stdout.flush()

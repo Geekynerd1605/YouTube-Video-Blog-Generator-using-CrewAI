@@ -1,6 +1,14 @@
-# pytube often breaks when YouTube changes; crewai_tools uses it for channel loading.
+"""
+YouTube channel search tool and compatibility patches for crewai_tools.
+
+- Aliases pytubefix as pytube (crewai_tools expects the pytube module name).
+- Fixes Channel.url_generator to yield string watch URLs for RAG indexing.
+- YoutubeChannelSearchToolFixed normalizes @handles vs full URLs for RagTool.
+"""
+
 import sys
 
+# crewai_tools imports "pytube"; redirect to pytubefix when available (more reliable).
 try:
     import pytubefix as _pytubefix
 
@@ -10,7 +18,7 @@ except ImportError:
 
 
 def _patch_pytubefix_channel_url_generator() -> None:
-    """pytubefix Channel.url_generator yields YouTube/Playlist objects; crewai_tools expects str URLs."""
+    """Make Channel.url_generator yield str watch URLs; crewai_tools RAG expects strings, not YouTube objects."""
     if _pytubefix is None:
         return
     try:
@@ -44,7 +52,7 @@ from crewai_tools.tools.rag.rag_tool import RagTool
 
 
 def _normalize_channel_url(handle_or_url: str) -> str:
-    """Turn @handle or handle into a full channel URL RagTool/pytube accept."""
+    """Turn @handle or bare handle into https://www.youtube.com/@handle for RagTool."""
     s = handle_or_url.strip()
     if s.startswith("http://") or s.startswith("https://"):
         return s
@@ -53,15 +61,16 @@ def _normalize_channel_url(handle_or_url: str) -> str:
 
 
 class YoutubeChannelSearchToolFixed(YoutubeChannelSearchTool):
-    """Work around crewai_tools prepending '@' to full URLs, which breaks urlparse and file-path checks."""
+    """Avoid crewai_tools prepending '@' to full URLs, which breaks urlparse and path checks."""
 
     def add(self, youtube_channel_handle: str) -> None:
         url = _normalize_channel_url(youtube_channel_handle)
         RagTool.add(self, url, data_type=DataType.YOUTUBE_CHANNEL)
 
 
-# Use handle only; do not pass a bare https URL through YoutubeChannelSearchTool.add() — it becomes @https://...
-# Default 0.6 similarity is strict; channel RAG often needs a lower bar to return chunks.
+# Default channel and RAG tuning — adjust handle, similarity_threshold, or limit as needed.
+# Use @handle form; bare https URLs in add() get mangled to @https://... by the base tool.
+# similarity_threshold 0.28 is looser than default 0.6 so channel chunks match more often.
 yt_tool = YoutubeChannelSearchToolFixed(
     youtube_channel_handle="@krishnaik06",
     similarity_threshold=0.28,
